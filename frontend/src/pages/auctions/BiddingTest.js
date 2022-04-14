@@ -9,7 +9,7 @@ import {
   Snackbar,
   Typography,
 } from "@mui/material";
-import { H1, H3 } from "../../components/Typography";
+import { H1, H2, H3 } from "../../components/Typography";
 import React, { useEffect, useRef, useState } from "react";
 import {
   fetchBidItemHistories,
@@ -36,17 +36,18 @@ import { useDispatch, useSelector } from "react-redux";
 import { API } from "aws-amplify";
 import AdminActions from "./AdminActions";
 import AdminTable from "./AdminTable";
+import BiddingTitle from "./BiddingTitle";
 import BazarButton from "../../components/BazarButton";
 import BidItemHistoriesRenderList from "./BidItemHistoriesRenderList";
 import ImageGallery from "react-image-gallery";
-import { green } from "@mui/material/colors";
+import { green, blue } from "@mui/material/colors";
 import { makeStyles } from "@mui/styles";
 import { onUpdateLots } from "../../graphql/subscriptions";
 import { useParams } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   glary: {
-    width: "900px",
+    width: "100%",
     [theme.breakpoints.down("900")]: {
       width: "100%",
     },
@@ -224,32 +225,51 @@ export default function BiddingTest() {
   };
 
   // console.log("imgUrls", lotInProgress[0].auctionItem.imgUrls);
-
-  const imgListInProgress =
-    lotInProgress.length === 1 &&
-    lotInProgress[0].auctionItem.imgUrls.map((url) => {
-      return { original: url, thumbnail: url };
-    });
-  //console.log(imgListInProgress);
-
+  const [imgListInProgress, setImgListInProgress] = useState([]);
+  useEffect(() => {
+   if (lotInProgress.length) {
+    setImgListInProgress(
+      lotInProgress[0].auctionItem.imgUrls.map((url) => {
+        return { original: url, thumbnail: url, originalHeight: 500  };
+      }))
+   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lotInProgress.length]);
+    
   return (
-    <>
+    <div style={{padding: "0px 10%" }}>
       {/* <AdminLotsGrid /> */}
-      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
+      <Box sx={{width: "100%", minWidth: "400px", margin: "1rem 0"}}>
+        <BiddingTitle
+          title={lotInProgress[0]?.auctionItem?.title}
+          description={lotInProgress[0]?.auctionItem?.description}
+          createdAt={lotInProgress[0]?.auctionItem?.createdAt}
+          >
+        </BiddingTitle>
+      </Box>
+      <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
         {lotInProgress.length === 1 ? (
-          <Box sx={{ m: "1rem" }}>
-            <Box className={classes.glary}>
-              <ImageGallery
-                showFullscreenButton={true}
-                showPlayButton={false}
-                showIndex={true}
-                startIndex={0}
-                thumbnailPosition={"left"}
-                items={imgListInProgress}
-                originalHeight={"500px"}
-                thumbnailHeight={"500px"}
-              />
-            </Box>
+          <>
+          <Box sx={{ width: "70%", minWidth: "400px" }}>
+            <Paper>
+              <Box className={classes.glary}>
+                <ImageGallery
+                  showFullscreenButton={true}
+                  showPlayButton={false}
+                  showIndex={true}
+                  startIndex={0}
+                  useBrowserFullscreen={true}
+                  thumbnailPosition={"left"}
+                  items={imgListInProgress}
+                  onScreenChange={(isFullScreen) => {
+                    setImgListInProgress((prev) => prev.map((item) => {
+                      item.originalHeight = isFullScreen ? "100%" : "500px";
+                      return item;
+                    }))
+                  }}
+                />
+              </Box>
+            </Paper>
             {/* <Box>
               <H2>
                 <Card sx={{ minWidth: 275 }}>
@@ -282,46 +302,31 @@ export default function BiddingTest() {
                 </Card>
               </H2>
             </Box> */}
-            <Box sx={{ textAlign: "center", my: "2rem" }}>
-              <Paper sx={{ maxWidth: "500px", margin: "auto" }}>
-                <H1 color="secondary.500" mb="0.2rem">
-                  Current Bid is: $
-                  {maxBidPriceByCurrentLot
-                    ? Number(maxBidPriceByCurrentLot.bidPrice)
-                        .toFixed(2)
-                        .replace(/\d(?=(\d{3})+\.)/g, "$&,")
-                    : 0}{" "}
-                  (CAD)
-                </H1>
-              </Paper>
-              <Paper sx={{ maxWidth: "500px", margin: "auto" }}>
-                <H1 color="secondary.500" mb="0.2rem">
-                  Next Bid is: $
-                  {nextBid
-                    ? nextBid.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")
-                    : lotInProgress[0].startingPrice
-                        .toFixed(2)
-                        .replace(/\d(?=(\d{3})+\.)/g, "$&,")}{" "}
-                  (CAD)
-                </H1>
-              </Paper>
-              {maxBidPriceByCurrentLot &&
-                auction.auctionUserNumbers &&
-                auction.auctionUserNumbers.items.length !== 0 &&
-                maxBidPriceByCurrentLot.userNumber ===
-                  auction.auctionUserNumbers.items[0].number && (
-                  <Paper
-                    sx={{
-                      maxWidth: "500px",
-                      margin: "auto",
-                      backgroundColor: "green",
-                    }}
-                  >
-                    <H1 color="" mb="0.2rem">
-                      You are the highest bidder now
-                    </H1>
-                  </Paper>
-                )}
+            <Box sx={{ textAlign: "center", my: "1rem" }}>
+              <Box sx={{ textAlign: "center", my: "1rem", display: "flex", justifyContent: "space-between" }}>
+                <Paper sx={{ width: "49.5%" }}>
+                  <H2 color="secondary.500">
+                    Current Bid is: $
+                    {maxBidPriceByCurrentLot
+                      ? Number(maxBidPriceByCurrentLot.bidPrice)
+                          .toFixed(2)
+                          .replace(/\d(?=(\d{3})+\.)/g, "$&,")
+                      : 0}{" "}
+                    (CAD)
+                  </H2>
+                </Paper>
+                <Paper sx={{ width: "49.5%" }}>
+                  <H2 color="secondary.500">
+                    Next Bid is: $
+                    {nextBid
+                      ? nextBid.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")
+                      : lotInProgress[0].startingPrice
+                          .toFixed(2)
+                          .replace(/\d(?=(\d{3})+\.)/g, "$&,")}{" "}
+                    (CAD)
+                  </H2>
+                </Paper>
+              </Box>
               {!cognitoGroup.includes("admin") && (
                 <BazarButton
                   variant="contained"
@@ -347,9 +352,26 @@ export default function BiddingTest() {
                   )}
                 </BazarButton>
               )}
+              {maxBidPriceByCurrentLot &&
+                auction.auctionUserNumbers &&
+                auction.auctionUserNumbers.items.length !== 0 &&
+                maxBidPriceByCurrentLot.userNumber ===
+                  auction.auctionUserNumbers.items[0].number && (
+                  <Paper
+                    sx={{
+                      maxWidth: "500px",
+                      margin: "auto",
+                      backgroundColor: "green",
+                    }}
+                  >
+                    <H1 color="" mb="0.2rem">
+                      You are the highest bidder now
+                    </H1>
+                  </Paper>
+                )}
             </Box>
             {isAuthenticated && !cognitoGroup.includes("admin") && (
-              <Paper sx={{ p: "2rem", m: "1rem" }}>
+              <Paper sx={{ p: "2rem", marginBottom: "1rem" }}>
                 <H3>My Status:</H3>
                 <Box sx={{ pl: "2rem" }}>
                   My Limitation:{" "}
@@ -367,23 +389,29 @@ export default function BiddingTest() {
               </Paper>
             )}
           </Box>
+          <Paper sx={{
+             flex: 1,
+             minWidth: "300px",
+             marginLeft: "8px",
+             padding: "0 16px",
+             height: "500px",
+             overflow: "auto",
+             maxWidth: "70%"
+           }}>
+            <div ref={messageRef} style={{height: '500px' }}>
+                <BidItemHistoriesRenderList bitItemHistories={bitItemHistories} />
+            </div>
+         </Paper>
+        </>
         ) : (
-          <Typography variant="h3">Waiting</Typography>
+          // <Typography variant="h3"><CircularProgress />Waiting</Typography>
+          <>
+            <Box sx={{height: "500px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"}}>
+              <CircularProgress sx={{color: blue[600]}} size={60}/>
+              <Typography sx={{ my: "2rem", fontSize: "20px", fontWeight: "bold" }}>Waiting...</Typography>
+            </Box>
+          </>
         )}
-
-        <Box
-          sx={{
-            width: "300px",
-            maxHeight: "500px",
-            overflow: "auto",
-            mx: "2rem",
-            py: "2rem",
-          }}
-        >
-          <div ref={messageRef}>
-            <BidItemHistoriesRenderList bitItemHistories={bitItemHistories} />
-          </div>
-        </Box>
       </Box>
       {cognitoGroup.includes("admin") && (
         <Box sx={{ my: "2rem" }}>
@@ -420,6 +448,6 @@ export default function BiddingTest() {
           {alertStatus.sentence}
         </Alert>
       </Snackbar>
-    </>
+    </div>
   );
 }

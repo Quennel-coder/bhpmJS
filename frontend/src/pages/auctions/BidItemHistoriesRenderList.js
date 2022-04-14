@@ -118,7 +118,7 @@ export default function BidItemHistoriesRenderList({ bitItemHistories }) {
         {bitItemHistories &&
           bitItemHistories.map((history) => {
             return (
-              <Box sx={{ width: "200px" }} key={history.id}>
+              <Box key={history.id}>
                 {history.bidItemHistoryStatus ? (
                   <> {differentStatus(history)}</>
                 ) : (
